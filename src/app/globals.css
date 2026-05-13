@@ -110,41 +110,70 @@ button { font: inherit; }
   --white: #1F1F25;
 }
 
-/* ─── Phone shell ─── */
+/* ─── App screen shell ─── */
 .phone {
   width: 100%;
-  max-width: 420px;
+  max-width: 100%;
   min-height: 100dvh;
-  margin: 0 auto;
+  margin: 0;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--body);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   font-feature-settings: "ss01", "cv11";
 }
 
-/* Stage for centering the phone shell on a desktop preview */
 .phone-stage {
   min-height: 100dvh;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: stretch;
-  background: var(--paper-2);
+  background: var(--paper);
 }
 
-@media (min-width: 480px) {
-  .phone {
-    margin: 24px auto;
-    min-height: calc(100dvh - 48px);
-    border: 1px solid var(--line);
-    box-shadow: 0 30px 70px rgba(15, 15, 15, 0.12);
-  }
+/* Tablet: cap content to a readable column. */
+@media (min-width: 768px) {
+  .phone { max-width: 760px; margin: 0 auto; }
+  .phone .px-22 { padding-left: 32px; padding-right: 32px; }
+  .phone .scroll-area { flex: none; overflow: visible; }
 }
 
-/* ─── Status bar ─── */
+@media (min-width: 1024px) {
+  .phone { max-width: 980px; }
+}
+
+/* Pages whose own background fills the whole viewport (splash, success). */
+.fullbleed { max-width: 100% !important; }
+.fullbleed-stage { display: block; }
+
+/* Responsive grids — 2 cols on mobile, 4 cols on tablet+ */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.grid-2-4 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+@media (min-width: 768px) {
+  .grid-2-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+}
+
+.home-hero { height: 200px; }
+@media (min-width: 768px) { .home-hero { height: 300px; } }
+@media (min-width: 1024px) { .home-hero { height: 360px; } }
+
+.tier-grid { display: flex; flex-direction: column; gap: 12px; }
+@media (min-width: 768px) {
+  .tier-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+}
+
+/* On desktop the primary CTA at the bottom of mobile screens should not stretch
+   across the entire ~980px content column — keep it readable. */
+@media (min-width: 768px) {
+  .phone .btn.btn-display { max-width: 360px; margin: 0 auto; }
+}
+
+/* ─── Status bar (mobile only — fake iOS chrome) ─── */
 .statusbar {
   height: 44px;
   padding: 14px 22px 0;
@@ -162,8 +191,11 @@ button { font: inherit; }
   display: flex; gap: 5px; align-items: center;
 }
 .statusbar svg { display: block; }
+@media (min-width: 768px) {
+  .statusbar { display: none; }
+}
 
-/* ─── Bottom nav ─── */
+/* ─── Bottom nav (mobile) → top nav (desktop) ─── */
 .bottomnav {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -173,6 +205,7 @@ button { font: inherit; }
   flex-shrink: 0;
   position: sticky;
   bottom: 0;
+  z-index: 30;
 }
 .bottomnav .nav-item {
   display: flex;
@@ -191,6 +224,54 @@ button { font: inherit; }
 }
 .bottomnav .nav-item.active { color: var(--brick); }
 .bottomnav .nav-item svg { width: 22px; height: 22px; }
+
+@media (min-width: 768px) {
+  .phone-stage { padding-top: 64px; }
+  .bottomnav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: auto;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 32px;
+    border-top: 0;
+    border-bottom: 1px solid var(--line);
+    background: rgba(250, 248, 244, 0.92);
+    backdrop-filter: saturate(140%) blur(8px);
+  }
+  .bottomnav::before {
+    content: "SIMBA · BIMA";
+    font-family: var(--display);
+    font-size: 16px;
+    letter-spacing: 0.06em;
+    color: var(--brick);
+    margin-right: 24px;
+    padding-right: 24px;
+    border-right: 1px solid var(--line);
+    line-height: 1;
+  }
+  .bottomnav .nav-item {
+    flex-direction: row;
+    gap: 8px;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    padding: 22px 14px;
+    border-bottom: 2px solid transparent;
+    align-items: center;
+    justify-content: flex-start;
+    height: 64px;
+  }
+  .bottomnav .nav-item.active {
+    border-bottom-color: var(--brick);
+    color: var(--brick);
+  }
+  .bottomnav .nav-item svg { width: 18px; height: 18px; }
+  .dark-theme .bottomnav { background: rgba(14, 14, 16, 0.92); }
+}
 
 /* ─── Buttons ─── */
 .btn {

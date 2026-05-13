@@ -226,13 +226,7 @@ export default function HomePage() {
             <div className="eyebrow" style={{ marginBottom: 10 }}>
               {t(lang, "quick_actions")}
             </div>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 8,
-              }}
-            >
+            <div className="grid-2-4">
               <QuickAction
                 label={t(lang, "file_claim")}
                 icon="claim"
@@ -359,8 +353,11 @@ function HeroHeader({ name }: { name: string }) {
 
   if (hero === "stadium") {
     return (
-      <div style={{ position: "relative", height: 200, overflow: "hidden" }}>
-        <Photo src={PHOTO.stadiumCrowd} h={200} tone="dark" />
+      <div
+        className="home-hero"
+        style={{ position: "relative", overflow: "hidden" }}
+      >
+        <Photo src={PHOTO.stadiumCrowd} h="100%" tone="dark" />
         <div
           style={{
             position: "absolute",
@@ -392,9 +389,9 @@ function HeroHeader({ name }: { name: string }) {
   if (hero === "flat") {
     return (
       <div
+        className="home-hero"
         style={{
           position: "relative",
-          height: 200,
           background: "var(--brick)",
           color: "#fff",
           overflow: "hidden",
@@ -432,9 +429,9 @@ function HeroHeader({ name }: { name: string }) {
   // dark
   return (
     <div
+      className="home-hero"
       style={{
         position: "relative",
-        height: 200,
         background: "var(--ink)",
         color: "#fff",
         overflow: "hidden",

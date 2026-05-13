@@ -117,7 +117,7 @@ export default function TiersPage() {
             ))}
           </div>
 
-          <div className="px-22 col gap-12" style={{ paddingBottom: 18 }}>
+          <div className="px-22 tier-grid" style={{ paddingBottom: 18 }}>
             {tiers.map((tier) => (
               <TierCard
                 key={tier.id}

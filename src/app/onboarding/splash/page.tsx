@@ -12,7 +12,12 @@ export default function SplashPage() {
     hero === "flat" ? "var(--ink)" : "var(--brick)";
 
   return (
-    <div className="phone-stage">
+    <div
+      className="phone-stage"
+      style={{
+        background: hero === "flat" ? "var(--brick)" : "var(--ink)",
+      }}
+    >
       <div
         className="phone"
         style={{

@@ -112,7 +112,7 @@ export default function ClaimsCategoryPage() {
               {t(lang, "pick_one")}
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            <div className="grid-3">
               {cats.map((c) => {
                 const primary = claimDraft.category === c.id;
                 return (

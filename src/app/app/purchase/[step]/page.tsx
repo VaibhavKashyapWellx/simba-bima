@@ -14,10 +14,17 @@ export default function PurchasePage() {
   const step = Math.max(1, Math.min(4, parseInt(params.step ?? "1", 10) || 1));
   const { lang } = useApp();
 
+  const isSuccess = step === 4;
   return (
-    <div className="phone-stage">
-      <div className="phone">
-        <StatusBar invert={step === 4} />
+    <div
+      className="phone-stage"
+      style={isSuccess ? { background: "var(--ink)" } : undefined}
+    >
+      <div
+        className="phone"
+        style={isSuccess ? { background: "var(--ink)" } : undefined}
+      >
+        <StatusBar invert={isSuccess} />
         {step === 1 && <Step1 lang={lang} onNext={() => router.push("/app/purchase/2")} onBack={() => router.back()} />}
         {step === 2 && <Step2 lang={lang} onNext={() => router.push("/app/purchase/3")} onBack={() => router.push("/app/purchase/1")} />}
         {step === 3 && <Step3 lang={lang} onNext={() => router.push("/app/purchase/4")} onBack={() => router.push("/app/purchase/2")} />}
