@@ -76,13 +76,31 @@ export default function RiderPage() {
           </div>
 
           <div
-            className="display"
-            style={{ fontSize: 32, marginBottom: 8, lineHeight: 0.95 }}
+            className="kicker"
+            style={{ color: "var(--brick)", fontSize: 11, marginBottom: 10 }}
           >
-            {t(lang, "ob_q1").toUpperCase()}
+            {lang === "sw" ? "SWALI MOJA" : "ONE QUESTION"}
           </div>
-          <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 22 }}>
-            {t(lang, "ob_q1_sub")}
+          <div
+            className="display"
+            style={{ fontSize: 32, marginBottom: 10, lineHeight: 0.95 }}
+          >
+            {lang === "sw" ? (
+              <>
+                Mara nyingi <br />
+                uko barabarani?
+              </>
+            ) : (
+              <>
+                What gets you <br />
+                around?
+              </>
+            )}
+          </div>
+          <div style={{ fontSize: 14, color: "var(--muted)", marginBottom: 22, lineHeight: 1.5 }}>
+            {lang === "sw"
+              ? "Tutachagua kinga sahihi kwa wewe. Hakuna jibu baya — tunaweza kubadilisha baadaye."
+              : "We'll pre-pick the right cover. No wrong answers — you can change it later."}
           </div>
 
           <div className="col gap-12">

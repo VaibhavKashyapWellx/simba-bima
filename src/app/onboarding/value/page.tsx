@@ -9,26 +9,34 @@ export default function ValuePropPage() {
   const router = useRouter();
   const { lang, lionDensity } = useApp();
 
-  const stats = [
+  const promises: { icon: string; title: string; body: string }[] = [
     {
-      n: "350",
-      l: lang === "sw" ? "TSh / wiki" : "TSh / week",
-      k: lang === "sw" ? "Bei ya kuanzia" : "Starting from",
+      icon: "💸",
+      title:
+        lang === "sw" ? "Lipa kidogo. Wiki kwa wiki." : "Pay a little. Each week.",
+      body:
+        lang === "sw"
+          ? "Kuanzia TSh 350. Hakuna mkataba mrefu — simamisha wakati wowote."
+          : "From TSh 350. No long contract — pause whenever you need to.",
     },
     {
-      n: "48h",
-      l: lang === "sw" ? "Madai kulipwa" : "Claim payout",
-      k: "SLA",
+      icon: "📸",
+      title: lang === "sw" ? "Madai kwa picha." : "Claim with a photo.",
+      body:
+        lang === "sw"
+          ? "Piga picha, eleza kifupi, tutafanya iliyobaki. Hakuna fomu za hospitali."
+          : "Snap a photo, say what happened, we do the rest. No hospital paperwork.",
     },
     {
-      n: "M-PESA",
-      l: lang === "sw" ? "Malipo" : "Payment",
-      k: lang === "sw" ? "Otomatiki" : "Auto",
-    },
-    {
-      n: "TIRA",
-      l: lang === "sw" ? "Imedhibitiwa" : "Regulated",
-      k: "MO Assurance",
+      icon: "⚡",
+      title:
+        lang === "sw"
+          ? "Pesa M-Pesa ndani ya saa 24."
+          : "Money on M-Pesa in 24 hours.",
+      body:
+        lang === "sw"
+          ? "Madai yameidhinishwa? Pesa zinakuwa simuni mwako kabla ya kesho."
+          : "Once approved, the money lands on your phone before tomorrow.",
     },
   ];
 
@@ -37,7 +45,7 @@ export default function ValuePropPage() {
       <div className="phone">
         <StatusBar />
         <div className="scroll-area px-22" style={{ paddingTop: 8 }}>
-          <div className="row between" style={{ marginBottom: 24 }}>
+          <div className="row between" style={{ marginBottom: 18 }}>
             <div className="row gap-8">
               <LionMark size={26} color="var(--ink)" density={lionDensity} />
               <div
@@ -50,70 +58,149 @@ export default function ValuePropPage() {
             <div className="eyebrow">2 / 4</div>
           </div>
 
-          <Photo src={PHOTO.family} h={280} label="family at home, dar es salaam" />
+          <div className="progress-track" style={{ marginBottom: 24 }}>
+            <div className="progress-fill" style={{ width: "50%" }} />
+          </div>
 
-          <div style={{ marginTop: 26 }}>
+          <div
+            className="kicker"
+            style={{ color: "var(--brick)", fontSize: 11, marginBottom: 14 }}
+          >
+            {lang === "sw" ? "AHADI YETU KWAKO" : "OUR PROMISE TO YOU"}
+          </div>
+          <h1
+            className="display"
+            style={{
+              fontSize: 38,
+              lineHeight: 0.95,
+              marginBottom: 14,
+            }}
+          >
+            {lang === "sw" ? (
+              <>
+                Bima rahisi. <br />
+                Kwa lugha yako.
+              </>
+            ) : (
+              <>
+                Real cover. <br />
+                Plain language.
+              </>
+            )}
+          </h1>
+          <p
+            style={{
+              fontSize: 15,
+              lineHeight: 1.55,
+              color: "var(--muted)",
+              marginBottom: 24,
+              marginTop: 0,
+            }}
+          >
+            {lang === "sw"
+              ? "Tunajua kwa nini ulikuwa unaepuka bima. Sisi tumefanya jambo tofauti."
+              : "We know why you've been putting off insurance. We've done the opposite."}
+          </p>
+
+          <div style={{ marginBottom: 24, position: "relative", overflow: "hidden" }}>
+            <Photo
+              src={PHOTO.family}
+              h={220}
+              label="family at home, dar es salaam"
+            />
             <div
-              className="kicker"
-              style={{ color: "var(--brick)", fontSize: 11, marginBottom: 12 }}
-            >
-              {lang === "sw" ? "JINSI INAVYOFANYA KAZI" : "HOW IT WORKS"}
-            </div>
+              style={{
+                position: "absolute",
+                inset: 0,
+                background:
+                  "linear-gradient(180deg, transparent 50%, rgba(15,15,15,0.7) 100%)",
+              }}
+            />
             <div
               className="display"
-              style={{ fontSize: 36, marginBottom: 16, color: "var(--ink)" }}
+              style={{
+                position: "absolute",
+                left: 16,
+                bottom: 12,
+                color: "#fff",
+                fontSize: 14,
+                letterSpacing: "0.05em",
+              }}
             >
-              {lang === "sw" ? (
-                <>
-                  LIPA KIDOGO.
-                  <br />
-                  FUNIKA SANA.
-                </>
-              ) : (
-                <>
-                  PAY A LITTLE.
-                  <br />
-                  COVER A LOT.
-                </>
-              )}
+              {lang === "sw" ? "FAMILIA. KILA WIKI." : "FAMILY. EVERY WEEK."}
             </div>
-            <div style={{ fontSize: 14, color: "var(--ink-2)", lineHeight: 1.55 }}>
-              {t(lang, "ob_body")}
-            </div>
+          </div>
+
+          <div className="col gap-14" style={{ paddingBottom: 8 }}>
+            {promises.map((p, i) => (
+              <article
+                key={i}
+                className="row gap-14"
+                style={{
+                  alignItems: "flex-start",
+                  padding: "16px 16px",
+                  background: "var(--white)",
+                  border: "1px solid var(--line)",
+                }}
+              >
+                <div
+                  style={{
+                    width: 48,
+                    height: 48,
+                    background: "var(--paper-2)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 22,
+                    flexShrink: 0,
+                  }}
+                >
+                  {p.icon}
+                </div>
+                <div className="col" style={{ paddingTop: 2 }}>
+                  <div
+                    className="display"
+                    style={{
+                      fontSize: 17,
+                      lineHeight: 1.1,
+                      letterSpacing: "0.02em",
+                      marginBottom: 6,
+                    }}
+                  >
+                    {p.title}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 12.5,
+                      color: "var(--muted)",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {p.body}
+                  </div>
+                </div>
+              </article>
+            ))}
           </div>
 
           <div
             style={{
-              marginTop: 28,
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 0,
-              border: "1px solid var(--line)",
+              marginTop: 22,
+              padding: "12px 14px",
+              background: "rgba(27,107,58,0.10)",
+              borderLeft: "3px solid var(--pitch)",
+              fontSize: 11.5,
+              color: "var(--ink-2)",
+              lineHeight: 1.5,
             }}
           >
-            {stats.map((s, i) => (
-              <div
-                key={i}
-                style={{
-                  padding: "16px 14px",
-                  borderRight: i % 2 === 0 ? "1px solid var(--line)" : 0,
-                  borderTop: i > 1 ? "1px solid var(--line)" : 0,
-                }}
-              >
-                <div className="eyebrow" style={{ fontSize: 9, marginBottom: 6 }}>
-                  {s.k}
-                </div>
-                <div
-                  className="display tabular"
-                  style={{ fontSize: 28, color: "var(--brick)", lineHeight: 1 }}
-                >
-                  {s.n}
-                </div>
-                <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}>
-                  {s.l}
-                </div>
-              </div>
-            ))}
+            <span style={{ fontWeight: 700, color: "var(--pitch)" }}>
+              {lang === "sw" ? "TIRA · MO ASSURANCE" : "TIRA · MO ASSURANCE"}
+            </span>{" "}
+            ·{" "}
+            {lang === "sw"
+              ? "Tunashika hatari, MO Assurance inalipa, na TIRA inadhibiti."
+              : "We hold the risk, MO Assurance pays the claim, TIRA regulates the lot."}
           </div>
 
           <div style={{ height: 20 }} />
@@ -134,6 +221,16 @@ export default function ValuePropPage() {
           >
             <span>{t(lang, "continue")}</span>
           </button>
+          <div
+            style={{
+              textAlign: "center",
+              fontSize: 11,
+              color: "var(--muted)",
+              marginTop: 8,
+            }}
+          >
+            {lang === "sw" ? "Hatua moja ya dakika 2 imebaki" : "One 2-minute step to go"}
+          </div>
         </div>
       </div>
     </div>
