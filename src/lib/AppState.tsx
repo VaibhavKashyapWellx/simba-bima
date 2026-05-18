@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import type { Lang } from "./copy";
+import { issuePolicy, type Policy, generateClaimId } from "./policy";
 
 export type Aesthetic = "bold" | "soft";
 export type Hero = "stadium" | "flat" | "dark";
@@ -26,12 +27,24 @@ export type Vehicle = {
   colour: string;
 };
 
+export type Dependent = { name: string; relation: string };
+
 export type ClaimDraft = {
   category: string;
   photos: number;
   voiceSeconds: number;
   gps: string;
   datetime: string;
+};
+
+export type ClaimRecord = {
+  id: string;
+  category: string;
+  status: "submitted" | "review" | "approved" | "paid";
+  filedAt: string;
+  paidAt?: string;
+  payout: number;
+  summary: string;
 };
 
 export type PaymentRow = {
@@ -50,24 +63,29 @@ export type AppState = {
   lionDensity: LionDensity;
   theme: Theme;
 
-  // User
+  // Identity
   name: string;
   phone: string;
   nida: string;
   region: string;
   segment: Segment;
   fanId: string;
+  fanPoints: number;
+  streak: number; // weeks paid in a row
 
-  // Cover
-  baseTier: string; // e.g. "bronze"
-  motorAddOn: string | null; // "boda" | null
+  // Cover selection (pre-purchase) and issued policy
+  baseTier: string;
+  motorAddOn: string | null;
   weeklyPremium: number;
   autoDeduct: boolean;
   paused: boolean;
   vehicle: Vehicle | null;
+  dependents: Dependent[];
+  policy: Policy | null;
 
   // Claims
   claimDraft: ClaimDraft;
+  claims: ClaimRecord[];
   currentClaimId: string | null;
 
   // Payments
@@ -93,47 +111,42 @@ export type AppState = {
   setPaused: (b: boolean) => void;
   setClaimCategory: (c: string) => void;
   setClaimMeta: (m: Partial<ClaimDraft>) => void;
-  finalizeClaim: () => string;
+  submitClaim: () => ClaimRecord;
   setName: (n: string) => void;
   setPhone: (n: string) => void;
   setNida: (n: string) => void;
+  setRegion: (r: string) => void;
+  addDependent: (d: Dependent) => void;
+  removeDependent: (idx: number) => void;
+  issueCurrentPolicy: () => Policy;
+  resetAll: () => void;
 };
 
 const Ctx = createContext<AppState | null>(null);
 
-const STORAGE_KEY = "simba-bima:state:v1";
+const STORAGE_KEY = "simba-bima:state:v2";
 
-type Persisted = Partial<
-  Pick<
-    AppState,
-    | "lang"
-    | "aesthetic"
-    | "hero"
-    | "cardStyle"
-    | "lionDensity"
-    | "theme"
-    | "segment"
-    | "baseTier"
-    | "motorAddOn"
-    | "autoDeduct"
-    | "paused"
-    | "name"
-    | "phone"
-    | "nida"
-    | "vehicle"
-  >
->;
-
-function defaultPayments(): PaymentRow[] {
+function defaultPayments(weekly: number): PaymentRow[] {
   return [
-    { date: "12 May", week: "Wiki hii", amount: 1270, status: "due" },
-    { date: "05 May", week: "Wk 19", amount: 1270, status: "paid" },
-    { date: "28 Apr", week: "Wk 18", amount: 1270, status: "paid" },
-    { date: "21 Apr", week: "Wk 17", amount: 1270, status: "paid" },
-    { date: "14 Apr", week: "Wk 16", amount: 1270, status: "paid" },
-    { date: "07 Apr", week: "Wk 15", amount: 1270, status: "paid" },
+    { date: "12 May", week: "Wiki hii", amount: weekly, status: "due" },
+    { date: "05 May", week: "Wk 19", amount: weekly, status: "paid" },
+    { date: "28 Apr", week: "Wk 18", amount: weekly, status: "paid" },
+    { date: "21 Apr", week: "Wk 17", amount: weekly, status: "paid" },
+    { date: "14 Apr", week: "Wk 16", amount: weekly, status: "paid" },
+    { date: "07 Apr", week: "Wk 15", amount: weekly, status: "paid" },
   ];
 }
+
+const BASE_WEEKLY: Record<string, number> = {
+  bronze: 350,
+  silver: 920,
+  gold: 2070,
+  captain: 8080,
+};
+const MOTOR_WEEKLY: Record<string, number> = {
+  boda: 500,
+  "motor-comp": 3800,
+};
 
 export function AppStateProvider({ children }: { children: ReactNode }) {
   const [lang, setLang] = useState<Lang>("en");
@@ -143,37 +156,41 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [lionDensity, setLionDensity] = useState<LionDensity>("moderate");
   const [theme, setTheme] = useState<Theme>("light");
 
-  const [name, setName] = useState("John Mwakasege");
-  const [phone, setPhone] = useState("+255 754 123 456");
-  const [nida, setNida] = useState("19890514-12345-67890-12");
-  const [region, _setRegion] = useState("Dar es Salaam · Kinondoni");
-  const [segment, setSegment] = useState<Segment>("rider");
-  const [fanId] = useState("4287");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [nida, setNida] = useState("");
+  const [region, setRegion] = useState("Dar es Salaam · Kinondoni");
+  const [segment, setSegment] = useState<Segment>("neither");
+  const [fanId] = useState(() => Math.floor(Math.random() * 9000 + 1000).toString());
+  const [fanPoints, setFanPoints] = useState(0);
+  const [streak, setStreak] = useState(0);
 
-  const [baseTier, setBaseTier] = useState("bronze");
-  const [motorAddOn, setMotorAddOn] = useState<string | null>("boda");
+  const [baseTier, setBaseTier] = useState<string>("");
+  const [motorAddOn, setMotorAddOn] = useState<string | null>(null);
   const [autoDeduct, setAutoDeduct] = useState(true);
   const [paused, setPaused] = useState(false);
-  const [vehicle, setVehicle] = useState<Vehicle | null>({
-    reg: "T 426 ACX",
-    make: "Boxer 150 · 2023",
-    cc: "150",
-    colour: "Red",
-  });
+  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [dependents, setDependents] = useState<Dependent[]>([]);
+  const [policy, setPolicy] = useState<Policy | null>(null);
 
   const [claimDraft, setClaimDraft] = useState<ClaimDraft>({
     category: "moto",
-    photos: 3,
-    voiceSeconds: 34,
+    photos: 0,
+    voiceSeconds: 0,
     gps: "Morogoro Rd · Kinondoni",
-    datetime: "12 May 2026 · 18:24",
+    datetime: new Date().toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
   });
-  const [currentClaimId, setCurrentClaimId] = useState<string | null>(
-    "SB-CL-26-088421",
-  );
+  const [claims, setClaims] = useState<ClaimRecord[]>([]);
+  const [currentClaimId, setCurrentClaimId] = useState<string | null>(null);
 
-  const [payments] = useState<PaymentRow[]>(defaultPayments());
-  const [referralCode] = useState("SIMBA-J4287");
+  const [payments, setPayments] = useState<PaymentRow[]>(defaultPayments(0));
+  const [referralCode, setReferralCode] = useState("SIMBA-NEW");
   const [invited] = useState(3);
   const [signedUp] = useState(1);
 
@@ -183,7 +200,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
-      const p = JSON.parse(raw) as Persisted;
+      const p = JSON.parse(raw);
       if (p.lang) setLang(p.lang);
       if (p.aesthetic) setAesthetic(p.aesthetic);
       if (p.hero) setHero(p.hero);
@@ -191,14 +208,22 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       if (p.lionDensity) setLionDensity(p.lionDensity);
       if (p.theme) setTheme(p.theme);
       if (p.segment) setSegment(p.segment);
-      if (p.baseTier) setBaseTier(p.baseTier);
+      if (typeof p.baseTier === "string") setBaseTier(p.baseTier);
       if (p.motorAddOn !== undefined) setMotorAddOn(p.motorAddOn);
       if (p.autoDeduct !== undefined) setAutoDeduct(p.autoDeduct);
       if (p.paused !== undefined) setPaused(p.paused);
       if (p.name) setName(p.name);
       if (p.phone) setPhone(p.phone);
       if (p.nida) setNida(p.nida);
+      if (p.region) setRegion(p.region);
       if (p.vehicle !== undefined) setVehicle(p.vehicle ?? null);
+      if (Array.isArray(p.dependents)) setDependents(p.dependents);
+      if (p.policy) setPolicy(p.policy);
+      if (Array.isArray(p.claims)) setClaims(p.claims);
+      if (typeof p.fanPoints === "number") setFanPoints(p.fanPoints);
+      if (typeof p.streak === "number") setStreak(p.streak);
+      if (p.referralCode) setReferralCode(p.referralCode);
+      if (Array.isArray(p.payments)) setPayments(p.payments);
     } catch {
       // ignore
     }
@@ -207,25 +232,35 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   // Persist
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const p: Persisted = {
-      lang,
-      aesthetic,
-      hero,
-      cardStyle,
-      lionDensity,
-      theme,
-      segment,
-      baseTier,
-      motorAddOn,
-      autoDeduct,
-      paused,
-      name,
-      phone,
-      nida,
-      vehicle,
-    };
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(p));
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          lang,
+          aesthetic,
+          hero,
+          cardStyle,
+          lionDensity,
+          theme,
+          segment,
+          baseTier,
+          motorAddOn,
+          autoDeduct,
+          paused,
+          name,
+          phone,
+          nida,
+          region,
+          vehicle,
+          dependents,
+          policy,
+          claims,
+          fanPoints,
+          streak,
+          referralCode,
+          payments,
+        }),
+      );
     } catch {
       // ignore
     }
@@ -244,7 +279,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     name,
     phone,
     nida,
+    region,
     vehicle,
+    dependents,
+    policy,
+    claims,
+    fanPoints,
+    streak,
+    referralCode,
+    payments,
   ]);
 
   // Apply theme classes to <html>
@@ -255,20 +298,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     root.classList.toggle("dark-theme", theme === "dark");
   }, [aesthetic, theme]);
 
-  // Compute weekly premium from selected tiers
   const weeklyPremium = useMemo(() => {
-    const base: Record<string, number> = {
-      bronze: 350,
-      silver: 920,
-      gold: 2070,
-      captain: 8080,
-    };
-    const motor: Record<string, number> = {
-      boda: 920,
-      "gari-tpl": 2310,
-      "gari-comp": 6730,
-    };
-    return (base[baseTier] ?? 0) + (motorAddOn ? motor[motorAddOn] ?? 0 : 0);
+    return (
+      (baseTier ? BASE_WEEKLY[baseTier] ?? 0 : 0) +
+      (motorAddOn ? MOTOR_WEEKLY[motorAddOn] ?? 0 : 0)
+    );
   }, [baseTier, motorAddOn]);
 
   const setClaimCategory = useCallback(
@@ -279,12 +313,68 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     (m: Partial<ClaimDraft>) => setClaimDraft((d) => ({ ...d, ...m })),
     [],
   );
-  const finalizeClaim = useCallback((): string => {
-    const id =
-      "SB-CL-26-" + Math.floor(Math.random() * 900000 + 100000).toString();
+
+  const submitClaim = useCallback((): ClaimRecord => {
+    const id = generateClaimId();
+    const record: ClaimRecord = {
+      id,
+      category: claimDraft.category,
+      status: "review",
+      filedAt: new Date().toISOString(),
+      payout: 250_000,
+      summary:
+        claimDraft.category === "moto"
+          ? "Motorcycle accident · Morogoro Rd"
+          : claimDraft.category === "hosp"
+          ? "Hospital admission"
+          : "Claim filed",
+    };
+    setClaims((cs) => [record, ...cs]);
     setCurrentClaimId(id);
-    return id;
+    return record;
+  }, [claimDraft]);
+
+  const issueCurrentPolicy = useCallback((): Policy => {
+    const p = issuePolicy({
+      baseTierId: baseTier,
+      motorAddOnId: motorAddOn,
+      weeklyPremium,
+      insured: { name, nida, phone, region },
+      vehicle,
+      dependents,
+    });
+    setPolicy(p);
+    setPayments(defaultPayments(weeklyPremium));
+    setFanPoints(1500); // Welcome bonus
+    setStreak(1);
+    setReferralCode("SIMBA-" + (name.split(" ")[0]?.toUpperCase() ?? "FAN") + "-" + Math.floor(Math.random() * 9000 + 1000));
+    return p;
+  }, [baseTier, motorAddOn, weeklyPremium, name, nida, phone, region, vehicle, dependents]);
+
+  const resetAll = useCallback(() => {
+    if (typeof window !== "undefined") window.localStorage.removeItem(STORAGE_KEY);
+    setName("");
+    setPhone("");
+    setNida("");
+    setRegion("Dar es Salaam · Kinondoni");
+    setBaseTier("");
+    setMotorAddOn(null);
+    setVehicle(null);
+    setDependents([]);
+    setPolicy(null);
+    setClaims([]);
+    setFanPoints(0);
+    setStreak(0);
   }, []);
+
+  const addDependent = useCallback(
+    (d: Dependent) => setDependents((arr) => [...arr, d]),
+    [],
+  );
+  const removeDependent = useCallback(
+    (idx: number) => setDependents((arr) => arr.filter((_, i) => i !== idx)),
+    [],
+  );
 
   const value: AppState = {
     lang,
@@ -299,13 +389,18 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     region,
     segment,
     fanId,
+    fanPoints,
+    streak,
     baseTier,
     motorAddOn,
     weeklyPremium,
     autoDeduct,
     paused,
     vehicle,
+    dependents,
+    policy,
     claimDraft,
+    claims,
     currentClaimId,
     payments,
     referralCode,
@@ -325,10 +420,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setPaused,
     setClaimCategory,
     setClaimMeta,
-    finalizeClaim,
+    submitClaim,
     setName,
     setPhone,
     setNida,
+    setRegion,
+    addDependent,
+    removeDependent,
+    issueCurrentPolicy,
+    resetAll,
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

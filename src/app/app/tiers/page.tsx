@@ -24,7 +24,8 @@ export default function TiersPage() {
   const onChoose = (id: string) => {
     if (tab === "family") setBaseTier(id);
     else setMotorAddOn(id);
-    router.push("/app/purchase/1");
+    // Upgrading from inside the app: jump straight to pay with the new selection.
+    router.push("/onboarding/pay");
   };
 
   return (

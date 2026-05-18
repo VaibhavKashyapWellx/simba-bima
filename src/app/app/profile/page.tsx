@@ -13,7 +13,7 @@ import { FakeQR } from "@/components/FakeQR";
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { lang, lionDensity, name, phone, nida, vehicle, fanId } = useApp();
+  const { lang, lionDensity, name, phone, nida, vehicle, fanId, resetAll } = useApp();
   const firstName = name.split(" ")[0];
 
   const sections: { id: string; icon: string; label: string; count: string; sub: string }[] = [
@@ -289,7 +289,10 @@ export default function ProfilePage() {
               <button
                 className="btn btn-ghost"
                 style={{ borderColor: "var(--brick)", color: "var(--brick)" }}
-                onClick={() => router.push("/onboarding/splash")}
+                onClick={() => {
+                  resetAll();
+                  router.push("/onboarding/splash");
+                }}
               >
                 {t(lang, "logout")}
               </button>

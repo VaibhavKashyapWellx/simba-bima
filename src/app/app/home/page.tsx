@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import {
   LionMark,
   Wordmark,
@@ -9,10 +10,10 @@ import {
   Photo,
   LangPill,
 } from "@/components/ds";
-import { TierPatch } from "@/components/TierPatch";
 import { useApp } from "@/lib/AppState";
 import { t, PHOTO, fmtTSh } from "@/lib/copy";
-import { TIERS_BASE, TIERS_MOTOR, getTier } from "@/lib/tiers";
+import { getTier } from "@/lib/tiers";
+import { formatDate, tiers as tiersOf } from "@/lib/policy";
 import type { ReactNode } from "react";
 
 export default function HomePage() {
@@ -20,50 +21,65 @@ export default function HomePage() {
   const {
     lang,
     hero,
-    cardStyle,
     lionDensity,
     name,
-    baseTier,
-    motorAddOn,
+    policy,
     weeklyPremium,
+    fanPoints,
+    streak,
   } = useApp();
 
-  const base = getTier(baseTier) ?? TIERS_BASE[0];
-  const motor = motorAddOn ? getTier(motorAddOn) ?? TIERS_MOTOR[0] : null;
+  // If they got here without buying, send them through onboarding
+  useEffect(() => {
+    if (!policy) router.replace("/onboarding/splash");
+  }, [policy, router]);
+
+  if (!policy) return null;
+
+  const { base, motor } = tiersOf(policy);
+  const firstName = (name || "Mshabiki").split(" ")[0];
 
   return (
     <div className="phone-stage">
       <div className="phone">
-        <StatusBar invert={hero !== undefined && hero !== "flat"} />
+        <StatusBar invert={hero !== "flat"} />
         <div className="scroll-area">
-          <HeroHeader name={name} />
+          <HeroHeader firstName={firstName} fanPoints={fanPoints} />
 
+          {/* Active cover card */}
           <div
             className="px-22"
-            style={{ marginTop: -38, position: "relative", zIndex: 2 }}
+            style={{ marginTop: -42, position: "relative", zIndex: 2 }}
           >
-            <div className="card" style={{ background: "var(--white)", padding: 0 }}>
-              <div className="row between" style={{ padding: "14px 16px 10px" }}>
+            <button
+              onClick={() => router.push("/app/cover")}
+              className="card"
+              style={{
+                background: "var(--white)",
+                padding: 0,
+                width: "100%",
+                textAlign: "left",
+                border: "1px solid var(--line)",
+                cursor: "pointer",
+              }}
+            >
+              <div className="row between" style={{ padding: "14px 16px 8px" }}>
                 <div className="eyebrow">{t(lang, "active_cover")}</div>
-                <div className="chip pitch">● {t(lang, "verified").toUpperCase()}</div>
+                <div className="chip pitch">● {t(lang, "policy_active").toUpperCase()}</div>
               </div>
-              <div className="row" style={{ padding: "0 16px 16px", gap: 10 }}>
-                <TierPatch
-                  tier={base}
-                  lang={lang}
-                  small
-                  accent="brick"
-                  style={cardStyle}
-                />
-                {motor && (
-                  <TierPatch
-                    tier={motor}
-                    lang={lang}
-                    small
-                    accent="ink"
-                    style={cardStyle}
-                  />
-                )}
+              <div style={{ padding: "0 16px 12px" }}>
+                <div
+                  className="display tabular"
+                  style={{ fontSize: 26, lineHeight: 1 }}
+                >
+                  {[base?.badge.en, motor?.badge.en].filter(Boolean).join(" + ")}
+                </div>
+                <div
+                  className="tabular"
+                  style={{ fontSize: 11, color: "var(--muted)", marginTop: 4 }}
+                >
+                  {policy.policyNumber}
+                </div>
               </div>
               <div style={{ height: 1, background: "var(--line)" }} />
               <div className="row" style={{ padding: "12px 16px" }}>
@@ -71,59 +87,82 @@ export default function HomePage() {
                   <div className="eyebrow" style={{ fontSize: 9 }}>
                     {t(lang, "weekly_premium")}
                   </div>
-                  <div className="row gap-6" style={{ alignItems: "baseline" }}>
-                    <div
-                      className="display tabular"
-                      style={{ fontSize: 28, lineHeight: 1, color: "var(--ink)" }}
-                    >
-                      TSh {fmtTSh(weeklyPremium)}
-                    </div>
-                    <div style={{ fontSize: 11, color: "var(--muted)" }}>
-                      {t(lang, "per_week")}
-                    </div>
-                  </div>
                   <div
-                    style={{
-                      fontSize: 10.5,
-                      color: "var(--muted)",
-                      marginTop: 4,
-                    }}
+                    className="display tabular"
+                    style={{ fontSize: 22, lineHeight: 1, color: "var(--ink)" }}
                   >
-                    <span style={{ color: "var(--brick)" }}>
-                      {base.badge.en} {fmtTSh(base.weekly)}
-                    </span>
-                    {motor && (
-                      <>
-                        {" + "}
-                        <span style={{ color: "var(--ink)" }}>
-                          {motor.badge.en} {fmtTSh(motor.weekly)}
-                        </span>
-                      </>
-                    )}
+                    TSh {fmtTSh(weeklyPremium)}
+                  </div>
+                  <div style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 4 }}>
+                    {lang === "sw" ? "Inakomeshwa" : "Renews"}{" "}
+                    {formatDate(policy.expiresAt, lang)}
                   </div>
                 </div>
                 <div className="col" style={{ alignItems: "flex-end" }}>
                   <div className="eyebrow" style={{ fontSize: 9 }}>
-                    {t(lang, "days_left")}
+                    {lang === "sw" ? "Mfululizo" : "Streak"}
                   </div>
                   <div
                     className="display tabular"
-                    style={{ fontSize: 28, lineHeight: 1, color: "var(--pitch)" }}
+                    style={{ fontSize: 22, lineHeight: 1, color: "var(--pitch)" }}
                   >
-                    3
+                    {streak} 🔥
                   </div>
-                  <div
-                    style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 4 }}
-                  >
-                    {lang === "sw" ? "wiki hii" : "this week"}
+                  <div style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 4 }}>
+                    {lang === "sw" ? "wiki" : "weeks"}
                   </div>
                 </div>
               </div>
+            </button>
+          </div>
+
+          {/* Streak grid M-T-W-T-F-S-S */}
+          <div className="px-22" style={{ marginTop: 18 }}>
+            <div className="eyebrow" style={{ marginBottom: 8 }}>
+              {lang === "sw" ? "WIKI HII" : "THIS WEEK"}
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(7, 1fr)",
+                gap: 6,
+              }}
+            >
+              {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => {
+                const paid = i < 4;
+                const today = i === 4;
+                return (
+                  <div
+                    key={i}
+                    style={{
+                      aspectRatio: "1",
+                      background: paid
+                        ? "var(--pitch)"
+                        : today
+                        ? "var(--brick)"
+                        : "var(--paper-2)",
+                      color: paid || today ? "#fff" : "var(--muted)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontFamily: "var(--display)",
+                      fontSize: 14,
+                      letterSpacing: "0.04em",
+                      position: "relative",
+                    }}
+                  >
+                    <span style={{ position: "absolute", top: 4, left: 6, fontSize: 9, opacity: 0.7 }}>
+                      {d}
+                    </span>
+                    <span style={{ fontSize: 18 }}>{paid ? "✓" : today ? "●" : ""}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
           {/* Match day widget */}
-          <div className="px-22" style={{ marginTop: 18 }}>
+          <div className="px-22" style={{ marginTop: 22 }}>
             <div
               style={{
                 position: "relative",
@@ -199,12 +238,9 @@ export default function HomePage() {
                 <div className="col" style={{ alignItems: "flex-end" }}>
                   <div
                     className="eyebrow"
-                    style={{
-                      fontSize: 8,
-                      color: "rgba(255,255,255,0.55)",
-                    }}
+                    style={{ fontSize: 8, color: "rgba(255,255,255,0.55)" }}
                   >
-                    {t(lang, "match_kicker")}
+                    +50 PTS
                   </div>
                   <svg
                     width="22"
@@ -236,7 +272,7 @@ export default function HomePage() {
               <QuickAction
                 label={t(lang, "cover_note")}
                 icon="qr"
-                onClick={() => router.push("/app/profile")}
+                onClick={() => router.push("/app/cover")}
               />
               <QuickAction
                 label={t(lang, "upgrade")}
@@ -244,101 +280,58 @@ export default function HomePage() {
                 onClick={() => router.push("/app/tiers")}
               />
               <QuickAction
-                label={t(lang, "add_motor")}
-                icon="moto"
-                onClick={() => router.push("/app/tiers")}
+                label={t(lang, "refer")}
+                icon="refer"
+                onClick={() => router.push("/app/profile")}
               />
             </div>
           </div>
 
-          {/* Motor banner upsell */}
-          {!motor && (
-            <div className="px-22" style={{ marginTop: 18, marginBottom: 18 }}>
-              <button
-                onClick={() => router.push("/app/tiers")}
-                style={{
-                  width: "100%",
-                  background: "var(--paper-2)",
-                  border: "1px solid var(--line)",
-                  borderLeft: "3px solid var(--brick)",
-                  padding: "12px 14px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  cursor: "pointer",
-                  textAlign: "left",
-                }}
-              >
-                <svg
-                  width="32"
-                  height="32"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="var(--brick)"
-                  strokeWidth="1.6"
-                >
-                  <circle cx="5.5" cy="17.5" r="3.5" />
-                  <circle cx="18.5" cy="17.5" r="3.5" />
-                  <path d="M5.5 17.5L9 9h6l3.5 8.5M9 9l-1-3h3M15 9h3" />
-                </svg>
-                <div className="col grow">
-                  <div
-                    style={{ fontSize: 13, fontWeight: 700, color: "var(--ink)" }}
-                  >
-                    {t(lang, "motor_banner_title")}
-                  </div>
-                  <div
-                    style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}
-                  >
-                    {t(lang, "motor_banner_sub")}
-                  </div>
-                </div>
-                <div
-                  className="display"
-                  style={{
-                    fontSize: 13,
-                    color: "var(--brick)",
-                    letterSpacing: "0.08em",
-                  }}
-                >
-                  →
-                </div>
-              </button>
-            </div>
-          )}
-
-          {/* Mshabiki teaser */}
-          <div className="px-22" style={{ marginBottom: 24, marginTop: 18 }}>
-            <div
+          {/* 12th Man teaser */}
+          <div className="px-22" style={{ marginTop: 22, marginBottom: 24 }}>
+            <button
+              onClick={() => router.push("/app/profile")}
               style={{
                 position: "relative",
                 overflow: "hidden",
                 border: "1px solid var(--line)",
+                background: "var(--white)",
+                padding: 0,
+                width: "100%",
+                textAlign: "left",
+                cursor: "pointer",
               }}
             >
               <div style={{ position: "absolute", right: -30, top: -30, opacity: 0.08 }}>
                 <LionMark size={180} color="var(--brick)" density="moderate" />
               </div>
-              <div style={{ padding: "16px 16px", position: "relative" }}>
+              <div style={{ padding: "14px 16px", position: "relative" }}>
                 <div
-                  className="eyebrow"
-                  style={{ color: "var(--brick)", marginBottom: 6 }}
+                  className="row between"
+                  style={{ marginBottom: 6 }}
                 >
-                  MSHABIKI · 12th MAN
+                  <div className="eyebrow" style={{ color: "var(--brick)" }}>
+                    MSHABIKI · 12th MAN
+                  </div>
+                  <div className="display tabular" style={{ fontSize: 18, color: "var(--gold-deep)" }}>
+                    ★ {fanPoints.toLocaleString()}
+                  </div>
                 </div>
                 <div
                   className="display"
-                  style={{ fontSize: 22, lineHeight: 1, marginBottom: 6 }}
+                  style={{ fontSize: 18, lineHeight: 1, marginBottom: 4 }}
                 >
-                  {lang === "sw" ? "MUITE MSHABIKI." : "REFER A FAN."}
+                  {lang === "sw"
+                    ? "MUITE MSHABIKI, PATA WIKI BURE."
+                    : "REFER A FAN, GET A FREE WEEK."}
                 </div>
                 <div style={{ fontSize: 12, color: "var(--muted)" }}>
                   {lang === "sw"
-                    ? "Wote mpate wiki moja bure."
-                    : "Both of you get one week free."}
+                    ? "Pointi zako zinazidi. Anza."
+                    : "Your points grow. Start now."}
                 </div>
               </div>
-            </div>
+            </button>
           </div>
         </div>
         <BottomNav active="home" lang={lang} />
@@ -347,15 +340,72 @@ export default function HomePage() {
   );
 }
 
-function HeroHeader({ name }: { name: string }) {
+function HeroHeader({
+  firstName,
+  fanPoints,
+}: {
+  firstName: string;
+  fanPoints: number;
+}) {
   const { hero, lionDensity, lang } = useApp();
-  const firstName = name.split(" ")[0] ?? "";
+
+  const overlay = (
+    <div
+      style={{
+        position: "relative",
+        height: "100%",
+        padding: "0 22px",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        paddingTop: 14,
+        paddingBottom: 56,
+      }}
+    >
+      <div className="row between">
+        <div className="row gap-10">
+          <LionMark
+            size={28}
+            color={hero === "stadium" ? "#FFF" : hero === "flat" ? "#FFF" : "var(--brick)"}
+            density={lionDensity}
+          />
+          <Wordmark color="#FFF" size={14} />
+        </div>
+        <LangPill invert />
+      </div>
+      <div>
+        <div className="eyebrow" style={{ opacity: 0.75, color: "var(--gold)" }}>
+          {lang === "sw" ? "MAMBO" : "HEY"}, {firstName.toUpperCase()}
+        </div>
+        <div className="row between" style={{ alignItems: "flex-end", marginTop: 4 }}>
+          <div className="display" style={{ fontSize: 28, lineHeight: 1 }}>
+            {lang === "sw" ? "MSHABIKI" : "12TH MAN"}
+            <span style={{ color: "var(--brick)" }}>.</span>
+          </div>
+          <div className="col" style={{ alignItems: "flex-end" }}>
+            <div
+              className="eyebrow"
+              style={{ fontSize: 9, color: "rgba(255,255,255,0.7)" }}
+            >
+              {t(lang, "fan_points").toUpperCase()}
+            </div>
+            <div
+              className="display tabular"
+              style={{ fontSize: 22, color: "var(--gold)", lineHeight: 1 }}
+            >
+              ★ {fanPoints.toLocaleString()}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   if (hero === "stadium") {
     return (
       <div
         className="home-hero"
-        style={{ position: "relative", overflow: "hidden" }}
+        style={{ position: "relative", overflow: "hidden", color: "#fff" }}
       >
         <Photo src={PHOTO.stadiumCrowd} h="100%" tone="dark" />
         <div
@@ -363,26 +413,10 @@ function HeroHeader({ name }: { name: string }) {
             position: "absolute",
             inset: 0,
             background:
-              "linear-gradient(180deg, rgba(15,15,15,0.5) 0%, rgba(142,14,21,0.7) 50%, var(--paper) 100%)",
+              "linear-gradient(180deg, rgba(15,15,15,0.55) 0%, rgba(142,14,21,0.75) 60%, var(--paper) 100%)",
           }}
         />
-        <div style={{ position: "absolute", inset: 0, padding: "0 22px" }}>
-          <div className="row between" style={{ paddingTop: 12 }}>
-            <div className="row gap-8">
-              <LionMark size={28} color="#FFF" density={lionDensity} />
-              <Wordmark color="#FFF" size={14} />
-            </div>
-            <LangPill invert />
-          </div>
-          <div style={{ marginTop: 16, color: "#fff" }}>
-            <div className="eyebrow" style={{ opacity: 0.75 }}>
-              {t(lang, "hi")}, {firstName.toUpperCase()}
-            </div>
-            <div className="display" style={{ fontSize: 32, lineHeight: 1, marginTop: 4 }}>
-              {lang === "sw" ? "UMEFUNIKWA." : "YOU'RE COVERED."}
-            </div>
-          </div>
-        </div>
+        <div style={{ position: "absolute", inset: 0 }}>{overlay}</div>
       </div>
     );
   }
@@ -398,35 +432,13 @@ function HeroHeader({ name }: { name: string }) {
         }}
       >
         <div className="diag" style={{ position: "absolute", inset: 0 }} />
-        <div
-          style={{ position: "absolute", right: -20, top: -20, opacity: 0.18 }}
-        >
+        <div style={{ position: "absolute", right: -20, top: -20, opacity: 0.18 }}>
           <LionMark size={220} color="#FFF" density={lionDensity} />
         </div>
-        <div style={{ position: "relative", padding: "0 22px" }}>
-          <div className="row between" style={{ paddingTop: 12 }}>
-            <div className="row gap-8">
-              <LionMark size={28} color="#FFF" density={lionDensity} />
-              <Wordmark color="#FFF" size={14} />
-            </div>
-            <LangPill invert />
-          </div>
-          <div style={{ marginTop: 16 }}>
-            <div className="eyebrow" style={{ opacity: 0.75 }}>
-              {t(lang, "hi")}, {firstName.toUpperCase()}
-            </div>
-            <div
-              className="display"
-              style={{ fontSize: 30, lineHeight: 1, marginTop: 4 }}
-            >
-              {lang === "sw" ? "UMEFUNIKWA." : "YOU'RE COVERED."}
-            </div>
-          </div>
-        </div>
+        <div style={{ position: "relative", height: "100%" }}>{overlay}</div>
       </div>
     );
   }
-  // dark
   return (
     <div
       className="home-hero"
@@ -440,29 +452,7 @@ function HeroHeader({ name }: { name: string }) {
       <div style={{ position: "absolute", right: -10, top: -10, opacity: 0.1 }}>
         <LionMark size={220} color="var(--brick)" density={lionDensity} />
       </div>
-      <div style={{ position: "relative", padding: "0 22px" }}>
-        <div className="row between" style={{ paddingTop: 12 }}>
-          <div className="row gap-8">
-            <LionMark size={28} color="var(--brick)" density={lionDensity} />
-            <Wordmark color="#FFF" size={14} />
-          </div>
-          <LangPill invert />
-        </div>
-        <div style={{ marginTop: 16 }}>
-          <div
-            className="eyebrow"
-            style={{ opacity: 0.75, color: "var(--gold)" }}
-          >
-            {t(lang, "hi")}, {firstName.toUpperCase()}
-          </div>
-          <div
-            className="display"
-            style={{ fontSize: 30, lineHeight: 1, marginTop: 4 }}
-          >
-            {lang === "sw" ? "UMEFUNIKWA." : "YOU'RE COVERED."}
-          </div>
-        </div>
-      </div>
+      <div style={{ position: "relative", height: "100%" }}>{overlay}</div>
     </div>
   );
 }
@@ -474,7 +464,7 @@ function QuickAction({
   onClick,
 }: {
   label: string;
-  icon: "claim" | "qr" | "up" | "moto";
+  icon: "claim" | "qr" | "up" | "moto" | "refer";
   emphasis?: boolean;
   onClick?: () => void;
 }) {
@@ -502,6 +492,14 @@ function QuickAction({
         <circle cx="5.5" cy="17.5" r="3.5" />
         <circle cx="18.5" cy="17.5" r="3.5" />
         <path d="M5.5 17.5L9 9h6l3.5 8.5" />
+      </svg>
+    ),
+    refer: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7">
+        <circle cx="9" cy="9" r="3.5" />
+        <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+        <circle cx="17" cy="11" r="2.5" />
+        <path d="M21 19c0-2.2-1.8-4-4-4" />
       </svg>
     ),
   };
@@ -547,7 +545,7 @@ function QuickAction({
       </div>
       <div
         className="display"
-        style={{ fontSize: 14, letterSpacing: "0.04em", lineHeight: 1 }}
+        style={{ fontSize: 13, letterSpacing: "0.04em", lineHeight: 1.05 }}
       >
         {label}
       </div>

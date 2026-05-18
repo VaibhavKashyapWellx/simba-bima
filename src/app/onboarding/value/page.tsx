@@ -217,7 +217,7 @@ export default function ValuePropPage() {
         >
           <button
             className="btn btn-primary btn-display"
-            onClick={() => router.push("/onboarding/rider")}
+            onClick={() => router.push("/onboarding/kit")}
           >
             <span>{t(lang, "continue")}</span>
           </button>

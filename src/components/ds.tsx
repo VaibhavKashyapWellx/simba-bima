@@ -153,7 +153,7 @@ const NAV_ITEMS: {
     id: "cover",
     label_sw: "Kinga",
     label_en: "Cover",
-    href: "/app/tiers",
+    href: "/app/cover",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
         <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" />

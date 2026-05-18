@@ -1,16 +1,21 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { StatusBar, BottomNav } from "@/components/ds";
+import { useState } from "react";
+import { StatusBar, BottomNav, LionMark } from "@/components/ds";
 import { useApp } from "@/lib/AppState";
-import { t } from "@/lib/copy";
+import { t, fmtTSh } from "@/lib/copy";
 import type { ReactNode } from "react";
 
-export default function ClaimsCategoryPage() {
-  const router = useRouter();
-  const { lang, claimDraft, setClaimCategory } = useApp();
+type Cat = { id: string; label: string; icon: ReactNode };
 
-  const cats: { id: string; label: string; icon: ReactNode }[] = [
+export default function ClaimsPage() {
+  const router = useRouter();
+  const { lang, lionDensity, claims, claimDraft, setClaimCategory, policy } =
+    useApp();
+  const [picking, setPicking] = useState(false);
+
+  const cats: Cat[] = [
     {
       id: "moto",
       label: t(lang, "c_moto"),
@@ -75,116 +80,247 @@ export default function ClaimsCategoryPage() {
     },
   ];
 
+  const ytdPaid = claims
+    .filter((c) => c.status === "paid")
+    .reduce((s, c) => s + c.payout, 0);
+  const ANNUAL_CAP = 5_000_000;
+
   return (
     <div className="phone-stage">
       <div className="phone">
         <StatusBar />
         <div className="scroll-area">
-          <div className="px-22" style={{ paddingTop: 6 }}>
-            <div className="row between" style={{ marginBottom: 20 }}>
+          <div className="px-22" style={{ paddingTop: 8 }}>
+            <div className="row between" style={{ marginBottom: 18 }}>
               <div className="row gap-8">
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
+                <LionMark size={22} color="var(--brick)" density={lionDensity} />
+                <div
+                  className="display"
+                  style={{ fontSize: 14, letterSpacing: "0.06em" }}
                 >
-                  <path d="M15 5l-7 7 7 7" />
-                </svg>
-                <div className="display" style={{ fontSize: 14, letterSpacing: "0.06em" }}>
-                  {lang === "sw" ? "WEKA MADAI" : "FILE A CLAIM"}
+                  {lang === "sw" ? "MADAI" : "CLAIMS"}
                 </div>
               </div>
-              <div className="eyebrow tabular">1 / 3</div>
-            </div>
-            <div className="progress-track" style={{ marginBottom: 22 }}>
-              <div className="progress-fill" style={{ width: "33%" }} />
-            </div>
-            <div
-              className="display"
-              style={{ fontSize: 32, lineHeight: 0.95, marginBottom: 6 }}
-            >
-              {t(lang, "what_happened").toUpperCase()}
-            </div>
-            <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 18 }}>
-              {t(lang, "pick_one")}
             </div>
 
-            <div className="grid-3">
-              {cats.map((c) => {
-                const primary = claimDraft.category === c.id;
-                return (
-                  <button
-                    key={c.id}
-                    onClick={() => setClaimCategory(c.id)}
+            {/* YTD card */}
+            <div
+              style={{
+                background: "var(--ink)",
+                color: "#fff",
+                padding: "16px 16px",
+                marginBottom: 16,
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
+              <div className="flag-stripe" style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3 }} />
+              <div className="row between">
+                <div className="col grow">
+                  <div className="eyebrow" style={{ color: "var(--gold)" }}>
+                    {t(lang, "ytd_paid").toUpperCase()}
+                  </div>
+                  <div
+                    className="display tabular"
+                    style={{ fontSize: 28, marginTop: 4 }}
+                  >
+                    TSh {fmtTSh(ytdPaid)}
+                  </div>
+                  <div
+                    style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", marginTop: 2 }}
+                  >
+                    {claims.filter((c) => c.status === "paid").length}{" "}
+                    {lang === "sw" ? "madai yamelipwa" : "claims paid"}
+                  </div>
+                </div>
+                <div className="col" style={{ alignItems: "flex-end" }}>
+                  <div
                     style={{
-                      padding: "16px 12px",
-                      background: primary ? "var(--brick)" : "var(--white)",
-                      color: primary ? "#fff" : "var(--ink)",
-                      border: primary ? 0 : "1px solid var(--line)",
-                      minHeight: 110,
-                      position: "relative",
-                      overflow: "hidden",
-                      display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "space-between",
-                      textAlign: "left",
-                      cursor: "pointer",
+                      fontSize: 10,
+                      color: "rgba(255,255,255,0.55)",
+                      letterSpacing: "0.08em",
                     }}
                   >
-                    {primary && (
+                    {t(lang, "annual_cap_left").toUpperCase()}
+                  </div>
+                  <div
+                    className="display tabular"
+                    style={{ fontSize: 18, color: "var(--pitch-2)", marginTop: 2 }}
+                  >
+                    TSh {fmtTSh(Math.max(0, ANNUAL_CAP - ytdPaid))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Claims list */}
+            <div className="eyebrow" style={{ marginBottom: 10, color: "var(--brick)" }}>
+              {claims.length
+                ? t(lang, "claims_history").toUpperCase()
+                : t(lang, "claims_open").toUpperCase()}
+            </div>
+            {claims.length === 0 ? (
+              <div
+                style={{
+                  background: "var(--paper-2)",
+                  border: "1px solid var(--line)",
+                  padding: "20px 18px",
+                  textAlign: "center",
+                  marginBottom: 18,
+                }}
+              >
+                <div style={{ fontSize: 28, marginBottom: 6 }}>🛡</div>
+                <div className="display" style={{ fontSize: 16, marginBottom: 4 }}>
+                  {lang === "sw" ? "HAUNA MADAI." : "NO CLAIMS YET."}
+                </div>
+                <div style={{ fontSize: 12, color: "var(--muted)" }}>
+                  {t(lang, "no_claims")}
+                </div>
+              </div>
+            ) : (
+              <div
+                className="col"
+                style={{
+                  background: "var(--white)",
+                  border: "1px solid var(--line)",
+                  marginBottom: 18,
+                }}
+              >
+                {claims.map((c, i) => (
+                  <button
+                    key={c.id}
+                    onClick={() => router.push("/app/claims/status")}
+                    className="row between"
+                    style={{
+                      padding: "14px 14px",
+                      borderBottom:
+                        i < claims.length - 1 ? "1px solid var(--line)" : 0,
+                      background: "transparent",
+                      border: 0,
+                      width: "100%",
+                      cursor: "pointer",
+                      textAlign: "left",
+                    }}
+                  >
+                    <div className="col grow">
+                      <div className="row gap-8">
+                        <div
+                          className="display tabular"
+                          style={{ fontSize: 13, letterSpacing: "0.04em" }}
+                        >
+                          {c.id}
+                        </div>
+                        <div
+                          className="chip"
+                          style={{
+                            fontSize: 9,
+                            background:
+                              c.status === "paid"
+                                ? "rgba(27,107,58,0.12)"
+                                : c.status === "approved"
+                                ? "rgba(201,162,74,0.18)"
+                                : "rgba(215,38,56,0.12)",
+                            color:
+                              c.status === "paid"
+                                ? "var(--pitch)"
+                                : c.status === "approved"
+                                ? "var(--gold-deep)"
+                                : "var(--brick)",
+                          }}
+                        >
+                          ● {c.status.toUpperCase()}
+                        </div>
+                      </div>
                       <div
-                        style={{
-                          position: "absolute",
-                          top: 0,
-                          right: 0,
-                          width: 30,
-                          height: 30,
-                          background: "var(--brick-deep)",
-                          clipPath: "polygon(100% 0, 100% 100%, 0 0)",
+                        style={{ fontSize: 12, color: "var(--muted)", marginTop: 4 }}
+                      >
+                        {c.summary} · {new Date(c.filedAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <div
+                      className="display tabular"
+                      style={{ fontSize: 14, color: "var(--ink)" }}
+                    >
+                      TSh {fmtTSh(c.payout)}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Category picker — toggles */}
+            <button
+              className="btn btn-primary btn-display"
+              onClick={() => setPicking((p) => !p)}
+            >
+              <span>
+                {picking
+                  ? lang === "sw"
+                    ? "FUNGA"
+                    : "CLOSE"
+                  : t(lang, "file_new_claim")}
+              </span>
+            </button>
+
+            {picking && (
+              <div style={{ marginTop: 16 }}>
+                <div
+                  className="eyebrow"
+                  style={{ marginBottom: 8, color: "var(--brick)" }}
+                >
+                  {t(lang, "what_happened").toUpperCase()}
+                </div>
+                <div className="grid-3">
+                  {cats.map((c) => {
+                    const primary = claimDraft.category === c.id;
+                    return (
+                      <button
+                        key={c.id}
+                        onClick={() => {
+                          setClaimCategory(c.id);
+                          router.push("/app/claims/photos");
                         }}
-                      />
-                    )}
-                    <div
-                      style={{
-                        width: 28,
-                        height: 28,
-                        color: primary ? "#fff" : "var(--brick)",
-                      }}
-                    >
-                      {c.icon}
-                    </div>
-                    <div
-                      className="display"
-                      style={{
-                        fontSize: 14,
-                        letterSpacing: "0.04em",
-                        lineHeight: 1,
-                        marginTop: 12,
-                      }}
-                    >
-                      {c.label.toUpperCase()}
-                    </div>
-                    {primary && (
-                      <div
-                        className="eyebrow"
                         style={{
-                          fontSize: 8.5,
-                          color: "rgba(255,255,255,0.7)",
-                          position: "absolute",
-                          top: 8,
-                          right: 36,
+                          padding: "16px 12px",
+                          background: primary ? "var(--brick)" : "var(--white)",
+                          color: primary ? "#fff" : "var(--ink)",
+                          border: primary ? 0 : "1px solid var(--line)",
+                          minHeight: 110,
+                          position: "relative",
+                          overflow: "hidden",
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "space-between",
+                          textAlign: "left",
+                          cursor: "pointer",
                         }}
                       >
-                        {lang === "sw" ? "ILIYOPENDEKEZWA" : "RECOMMENDED"}
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+                        <div
+                          style={{
+                            width: 28,
+                            height: 28,
+                            color: primary ? "#fff" : "var(--brick)",
+                          }}
+                        >
+                          {c.icon}
+                        </div>
+                        <div
+                          className="display"
+                          style={{
+                            fontSize: 13,
+                            letterSpacing: "0.04em",
+                            lineHeight: 1,
+                            marginTop: 12,
+                          }}
+                        >
+                          {c.label.toUpperCase()}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <div
               style={{
@@ -192,30 +328,23 @@ export default function ClaimsCategoryPage() {
                 padding: "12px 14px",
                 background: "var(--paper-2)",
                 borderLeft: "3px solid var(--pitch)",
+                fontSize: 11.5,
+                color: "var(--ink-2)",
+                lineHeight: 1.5,
+                marginBottom: 12,
               }}
             >
               <div
                 className="eyebrow"
-                style={{ fontSize: 9, color: "var(--pitch)", marginBottom: 4 }}
+                style={{ color: "var(--pitch)", marginBottom: 4 }}
               >
-                {lang === "sw" ? "MADAI YANALIPWA NDANI YA SAA 48" : "PAID WITHIN 48 HOURS"}
+                {lang === "sw" ? "SAA 48 — KILA MARA" : "PAID IN 48 HOURS"}
               </div>
-              <div style={{ fontSize: 11.5, color: "var(--ink-2)" }}>
-                {lang === "sw"
-                  ? "Boda Shield: Captain hupokea kwa kipaumbele cha saa 24."
-                  : "Boda Shield & Captain get 24-hour priority SLA."}
-              </div>
+              {lang === "sw"
+                ? "Captain na Boda Shield wanapokea kipaumbele cha saa 24."
+                : "Captain and Boda Shield get 24-hour priority SLA."}
             </div>
-            <div style={{ height: 18 }} />
           </div>
-        </div>
-        <div className="px-22" style={{ padding: "12px 22px 22px", borderTop: "1px solid var(--line)" }}>
-          <button
-            className="btn btn-primary btn-display"
-            onClick={() => router.push("/app/claims/photos")}
-          >
-            <span>{t(lang, "continue")}</span>
-          </button>
         </div>
         <BottomNav active="claims" lang={lang} />
       </div>

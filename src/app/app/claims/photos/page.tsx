@@ -8,7 +8,7 @@ import { t } from "@/lib/copy";
 
 export default function ClaimsPhotosPage() {
   const router = useRouter();
-  const { lang, claimDraft, setClaimMeta, finalizeClaim } = useApp();
+  const { lang, claimDraft, setClaimMeta, submitClaim } = useApp();
   const [photoCount, setPhotoCount] = useState(claimDraft.photos);
   const [recording, setRecording] = useState(false);
   const [voiceSec, setVoiceSec] = useState(claimDraft.voiceSeconds);
@@ -17,7 +17,7 @@ export default function ClaimsPhotosPage() {
 
   const onSubmit = () => {
     setClaimMeta({ photos: photoCount, voiceSeconds: voiceSec });
-    finalizeClaim();
+    submitClaim();
     router.push("/app/claims/status");
   };
 

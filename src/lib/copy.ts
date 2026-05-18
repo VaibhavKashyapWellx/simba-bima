@@ -156,6 +156,82 @@ export const COPY: Record<string, { sw: string; en: string }> = {
     sw: "Hospital Cash: kiwango cha chini cha masaa 48, hadi siku 5/mwaka",
     en: "Hospital Cash: 48-hour minimum stay, up to 5 days/year",
   },
+
+  // Onboarding — kit
+  choose_kit: { sw: "Chagua kit yako", en: "Choose your kit" },
+  choose_kit_sub: {
+    sw: "Kila tier ni kit yetu. Lipa wiki kwa wiki kupitia M-Pesa. Anza popote — pandisha wakati wowote.",
+    en: "Each tier is one of our kits. Pay weekly via M-Pesa. Start anywhere — upgrade anytime.",
+  },
+  motor_only: { sw: "Motor pekee", en: "Motor only" },
+  motor_only_sub: {
+    sw: "Una bima ya familia tayari? Chukua motor pekee.",
+    en: "Already have life cover? Add just motor.",
+  },
+  most_pick: { sw: "Mashabiki wengi huchagua", en: "Most fans pick" },
+
+  // Onboarding — about you
+  about_you: { sw: "Tueleze kuhusu wewe", en: "Tell us about you" },
+  about_you_sub: {
+    sw: "Dakika moja. Tutathibitisha NIDA otomatiki.",
+    en: "One minute. We verify NIDA automatically.",
+  },
+  mpesa_hint_long: {
+    sw: "Tutatumia namba hii kwa malipo na utambulisho wa NIDA.",
+    en: "We'll use this for M-Pesa payments and NIDA identity match.",
+  },
+  region_label: { sw: "Mahali pa makazi", en: "Region" },
+
+  // Onboarding — pay
+  almost_there: { sw: "Tunakaribia kumaliza", en: "Almost there" },
+  stk_title: {
+    sw: "Idhinisha kwa M-Pesa",
+    en: "Approve on M-Pesa",
+  },
+  stk_long: {
+    sw: "Tumetuma ombi la M-Pesa simuni mwako. Idhinisha ndani ya sekunde 60.",
+    en: "An M-Pesa request has been sent to your phone. Approve within 60 seconds.",
+  },
+  resend_stk: { sw: "Tuma tena", en: "Resend STK push" },
+  first_week: { sw: "Malipo ya wiki ya kwanza", en: "First weekly debit" },
+  annual_cap: { sw: "Kikomo cha mwaka", en: "Annual cap" },
+  waiting_mpesa: { sw: "Inasubiri M-Pesa…", en: "Waiting for M-Pesa…" },
+
+  // Onboarding — issued
+  policy_live: { sw: "Bima yako iko hai", en: "Your cover is live" },
+  policy_no: { sw: "Namba ya bima", en: "Policy number" },
+  cover_note_id: { sw: "Cover note", en: "Cover note" },
+  inception_date: { sw: "Inaanza", en: "Inception" },
+  expiry_date: { sw: "Inaisha", en: "Expires" },
+  download_cover_note: { sw: "PAKUA HATI YA KINGA", en: "DOWNLOAD COVER NOTE" },
+  enter_app: { sw: "INGIA KWENYE APP", en: "ENTER THE APP" },
+  welcome_12: { sw: "Karibu Mshabiki Wengi.", en: "Welcome to the 12th Man." },
+
+  // Home
+  your_cover_card: { sw: "Kinga yako", en: "Your cover" },
+  fan_points: { sw: "Pointi za Mshabiki", en: "Fan points" },
+  weeks_paid: { sw: "wiki zilizolipwa", en: "weeks paid" },
+  on_streak: { sw: "siku za mfululizo", en: "day streak" },
+  policy_active: { sw: "Inalinda", en: "Protected" },
+  view_cover: { sw: "Tazama bima", en: "View cover" },
+
+  // Cover / policy
+  policy_schedule: { sw: "Ratiba ya bima", en: "Policy schedule" },
+  sum_insured: { sw: "Kiasi cha bima", en: "Sum insured" },
+  beneficiaries: { sw: "Wapokeaji", en: "Beneficiaries" },
+  vehicle_on_policy: { sw: "Gari kwenye bima", en: "Insured vehicle" },
+  share_whatsapp_short: { sw: "Shiriki WhatsApp", en: "Share via WhatsApp" },
+
+  // Claims list
+  claims_open: { sw: "Madai yanaendelea", en: "Open claims" },
+  claims_history: { sw: "Historia ya madai", en: "Claims history" },
+  no_claims: {
+    sw: "Hujawasilisha madai bado.",
+    en: "No claims yet. We hope it stays that way.",
+  },
+  ytd_paid: { sw: "Malipo mwaka huu", en: "YTD claims paid" },
+  annual_cap_left: { sw: "Kikomo kilichobaki", en: "Annual cap remaining" },
+  file_new_claim: { sw: "WEKA MADAI MAPYA", en: "FILE A NEW CLAIM" },
 };
 
 export function t(lang: Lang, key: string): string {
